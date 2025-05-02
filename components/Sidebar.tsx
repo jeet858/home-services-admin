@@ -40,6 +40,12 @@ const Sidebar: React.FunctionComponent = () => {
                   Manage Services
                 </li>
                 <li className="cursor-pointer hover:underline">Add Services</li>
+                <li className="cursor-pointer hover:underline">
+                  Add Sub Services
+                </li>
+                <li className="cursor-pointer hover:underline">
+                  Manage Sub Services
+                </li>
               </ul>
             </li>
           </ul>
