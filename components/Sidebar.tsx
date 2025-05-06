@@ -1,5 +1,6 @@
 "use client";
 import { BriefcaseBusiness, House, UserCog } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const Sidebar: React.FunctionComponent = () => {
@@ -24,10 +25,15 @@ const Sidebar: React.FunctionComponent = () => {
                 <BriefcaseBusiness /> <span>Orders</span>
               </div>
               <ul className="pl-6 text-gray-500 space-y-1">
-                <li className="cursor-pointer hover:underline">All Order</li>
-                <li className="cursor-pointer hover:underline">
+                <Link
+                  className="cursor-pointer hover:underline"
+                  href={"/upcoming-orders"}
+                >
+                  All Order
+                </Link>
+                {/* <li className="cursor-pointer hover:underline">
                   Order Details
-                </li>
+                </li> */}
               </ul>
             </li>
             <li className="flex flex-col gap-1">
@@ -35,16 +41,29 @@ const Sidebar: React.FunctionComponent = () => {
                 <UserCog /> <span>Services</span>
               </div>
               <ul className="pl-6 text-gray-500 space-y-1">
-                <li className="cursor-pointer hover:underline">All Services</li>
-                <li className="cursor-pointer hover:underline">
-                  Manage Services
+                <li>
+                  <Link
+                    className="cursor-pointer hover:underline"
+                    href={"/services"}
+                  >
+                    All Services
+                  </Link>
                 </li>
-                <li className="cursor-pointer hover:underline">Add Services</li>
-                <li className="cursor-pointer hover:underline">
-                  Add Sub Services
+                <li>
+                  <Link
+                    href={"/services/add-service"}
+                    className="cursor-pointer hover:underline"
+                  >
+                    Add Services
+                  </Link>
                 </li>
-                <li className="cursor-pointer hover:underline">
-                  Manage Sub Services
+                <li>
+                  <Link
+                    href={"/services/add-sub-service"}
+                    className="cursor-pointer hover:underline"
+                  >
+                    Add Sub Services
+                  </Link>
                 </li>
               </ul>
             </li>

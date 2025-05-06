@@ -1,137 +1,206 @@
 "use client";
 
-import { useState } from "react";
+import { get, post } from "@/utils/axiosIntersepcer";
+import { MouseEvent, useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import { FaUserCircle, FaBell, FaSearch, FaChevronLeft } from "react-icons/fa";
-
+interface ServiceDetail {
+  _id?: string;
+  name?: string;
+  description?: string;
+  process?: string;
+  originalPrice?: number;
+  discountedPrice?: number;
+  duration?: string;
+  image?: string; // You may want to convert this into an array if storing multiple image URLs
+  subservices?: any[]; // Consider defining a specific Subservice interface if known
+  createdAt?: string; // ISO date string
+  __v?: number;
+}
+interface SubServiceData {
+  name: string;
+  description: string;
+  process: string;
+  originalPrice: string;
+  discountedPrice: string;
+  duration: string;
+  serviceId: string;
+  image: string;
+}
 export default function AddSubServicePage() {
   const [selectedService, setSelectedService] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [subServiceData, setSubServiceData] = useState<SubServiceData>({
+    name: "",
+    description: "",
+    process: "",
+    originalPrice: "",
+    discountedPrice: "",
+    duration: "",
+    serviceId: "",
+    image: "https://demo.link",
+  });
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(Array.from(e.target.files).slice(0, 3));
-    }
+  const [services, setServices] = useState<ServiceDetail[]>([]);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await get("/api/services"); // adjust endpoint as needed
+        setServices(response.data.data.services);
+      } catch (error) {
+        console.error("Error fetching services:", error);
+      }
+    };
+
+    fetchServices();
+  }, []);
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setSubServiceData((prev) => ({ ...prev, [name]: value }));
   };
-
-  const services = ["Web Development", "Graphic Design", "Consulting"]; // Replace with dynamic fetch if needed
-
+  const onSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const response = await post("/api/subservice/", subServiceData);
+    if (response.status === 201 || response.status === 200) {
+      toast.success("Service added successfully");
+    } else {
+      toast.error("Error Occured");
+    }
+    console.log("res43", response);
+  };
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-full w-full bg-gray-50">
+      <Toaster />
       {/* Main Content */}
       <main className="flex-1 p-8">
         {/* Add Sub Service Section */}
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold mb-2">Add Sub Service</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Upload your media. The first image will be used as the thumbnail in
-            feed. Drag and drop up to
-            <span className="font-semibold"> 3 images/videos </span>
-            to create a multi-shot.
-          </p>
-
-          {/* Upload Box */}
-          <div className="border-2 border-dashed border-gray-300 rounded-xl bg-gray-100 flex items-center justify-center h-60 mb-4 cursor-pointer relative">
-            <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer">
-              <input
-                type="file"
-                multiple
-                onChange={handleUpload}
-                className="hidden"
-              />
-              <p className="text-center text-gray-600">
-                <span className="text-2xl">🖼️</span>
-                <br />
-                Click to upload or drag and drop.
-                <br />
-                <span className="text-xs text-gray-400">
-                  Maximum file size 50MB
-                </span>
-              </p>
-            </label>
-          </div>
-
-          {/* Thumbnails */}
-          <div className="flex gap-4 mb-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="w-20 h-20 bg-gray-200 rounded-md flex items-center justify-center"
-              >
-                {files[i] ? (
-                  <img
-                    src={URL.createObjectURL(files[i])}
-                    alt="preview"
-                    className="w-full h-full object-cover rounded-md"
-                  />
-                ) : (
-                  <span className="text-gray-400">🖼️</span>
-                )}
-              </div>
-            ))}
-          </div>
 
           {/* Select Parent Service */}
           <div className="mb-4">
             <label className="block mb-1 font-medium">Select Service</label>
             <select
-              value={selectedService}
-              onChange={(e) => setSelectedService(e.target.value)}
+              value={subServiceData.serviceId}
+              onChange={handleChange}
               className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
+              name="serviceId"
             >
               <option value="">-- Choose a Service --</option>
               {services.map((service, index) => (
-                <option key={index} value={service}>
-                  {service}
+                <option key={index} value={service._id}>
+                  {service.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Title */}
+          {/* Name */}
           <div className="mb-6">
-            <label className="block mb-1 font-medium">Title</label>
+            <label className="block mb-1 font-medium">Service Name</label>
             <input
+              name="name"
               type="text"
               placeholder="Name of your service"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              value={subServiceData.name}
+              onChange={handleChange}
               className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
             />
           </div>
 
           {/* Description */}
           <div className="mb-4">
-            <label className="block mb-1 font-medium">Description box</label>
+            <label className="block mb-1 font-medium">Description</label>
             <textarea
+              name="description"
               rows={4}
-              placeholder="Describe your services here..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe your service here..."
+              value={subServiceData.description}
+              onChange={handleChange}
               className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
             />
           </div>
 
-          {/* Price */}
+          {/* Process */}
           <div className="mb-6">
-            <label className="block mb-1 font-medium">Add price</label>
+            <label className="block mb-1 font-medium">Process</label>
             <input
+              name="process"
+              type="text"
+              placeholder="e.g. Cleanse, Massage, Steam..."
+              value={subServiceData.process}
+              onChange={handleChange}
+              className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
+            />
+          </div>
+
+          {/* Duration */}
+          <div className="mb-6">
+            <label className="block mb-1 font-medium">Duration</label>
+            <input
+              name="duration"
+              type="text"
+              placeholder="e.g. 1 hour"
+              value={subServiceData.duration}
+              onChange={handleChange}
+              className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
+            />
+          </div>
+
+          {/* Original Price */}
+          <div className="mb-6">
+            <label className="block mb-1 font-medium">Original Price</label>
+            <input
+              name="originalPrice"
               type="number"
-              placeholder="₹00"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              placeholder="₹1500"
+              value={subServiceData.originalPrice}
+              onChange={handleChange}
+              className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
+            />
+          </div>
+
+          {/* Discounted Price */}
+          <div className="mb-6">
+            <label className="block mb-1 font-medium">Discounted Price</label>
+            <input
+              name="discountedPrice"
+              type="number"
+              placeholder="₹999"
+              value={subServiceData.discountedPrice}
+              onChange={handleChange}
               className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
             />
           </div>
 
           {/* Buttons */}
           <div className="flex justify-between">
-            <button className="border border-gray-300 px-6 py-2 rounded-full">
+            <button
+              className="border border-gray-300 px-6 py-2 rounded-full cursor-pointer hover:bg-gray-100"
+              onClick={(e) => {
+                e.preventDefault();
+                setSubServiceData({
+                  name: "",
+                  description: "",
+                  process: "",
+                  originalPrice: "",
+                  discountedPrice: "",
+                  duration: "",
+                  serviceId: "",
+                  image: "https://demo.link",
+                });
+              }}
+            >
               Cancel
             </button>
-            <button className="bg-black text-white px-6 py-2 rounded-full">
+            <button
+              onClick={onSubmit}
+              className="bg-black text-white px-6 py-2 rounded-full cursor-pointer hover:bg-gray-900"
+            >
               Add
             </button>
           </div>

@@ -1,4 +1,31 @@
-export default function UpcomingOrderPage() {
+import { get } from "@/utils/axiosIntersepcer";
+import { cookies } from "next/headers";
+import Link from "next/link";
+interface Service {
+  _id: string;
+  name: string;
+  description: string;
+}
+interface Booking {
+  _id: string;
+  userId: string;
+  services: Service[];
+  subservices: Service[];
+  date: string; // ISO string
+  time: string; // e.g., "08:00 PM"
+  status: string; // e.g., "pending", "completed"
+  discount: number;
+  finalPrice: number;
+  createdAt: string; // ISO string
+  __v: number;
+}
+export default async function UpcomingOrderPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  console.log("token in or", token);
+  const orders = await get("/api/booking", token);
+  const bookings: Booking[] = orders.data.data.bookings;
+  console.log("orders", orders.data.data.bookings);
   return (
     <div className="flex w-full h-full bg-gray-50">
       {/* Main Content */}
@@ -9,33 +36,60 @@ export default function UpcomingOrderPage() {
 
         {/* Tabs */}
         <div className="flex gap-10 border-b mb-6">
-          <button className="pb-2 border-b-2 border-blue-600 text-blue-600 font-semibold">
+          <p className="pb-2 border-b-2 border-blue-600 text-blue-600 font-semibold">
             Upcoming Orders
-          </button>
-          <button className="pb-2 text-gray-400 font-semibold">
+          </p>
+          <Link
+            className="pb-2 text-gray-400 font-semibold"
+            href={"/completed-orders"}
+          >
             Completed Orders
-          </button>
+          </Link>
         </div>
 
         {/* Order Card */}
-        <div className="bg-blue-100 p-6 rounded-lg flex justify-between items-center">
-          <div>
-            <p className="font-bold">22nd</p>
-            <p className="font-bold">Nov, Tuesday</p>
-            <ul className="mt-4 text-gray-600 space-y-1 text-sm">
-              <li>• Diamond Facial</li>
-              <li>• Cleanup</li>
-            </ul>
-          </div>
+        {bookings
+          .filter((booking) => {
+            const bookingDateTime = new Date(booking.date);
+            const now = new Date();
+            return bookingDateTime > now;
+          })
+          .map((booking, index) => {
+            const bookingDate = new Date(booking.date);
+            return (
+              <div
+                className="bg-blue-100 p-6 rounded-lg flex justify-between items-center mb-2"
+                key={index}
+              >
+                <div>
+                  <p className="font-bold">
+                    {bookingDate.getDate()},
+                    {bookingDate.toLocaleString("en-US", { month: "short" })}
+                  </p>
+                  <p className="font-bold">
+                    {bookingDate.toLocaleString("en-US", {
+                      weekday: "long",
+                    })}
+                  </p>
+                  <ul className="mt-4 text-gray-600 space-y-1 text-sm">
+                    <li>{booking.services[0].description}</li>
+                  </ul>
+                </div>
 
-          <div className="flex flex-col items-end gap-4">
-            <span className="text-gray-700 font-semibold">Salon for Woman</span>
-            <button className="bg-blue-700 text-white px-6 py-2 rounded-md">
-              View Details
-            </button>
-          </div>
-        </div>
-
+                <div className="flex flex-col items-end gap-4">
+                  <span className="text-gray-700 font-semibold">
+                    {booking.services[0].name}
+                  </span>
+                  <Link
+                    className="bg-blue-700 text-white px-6 py-2 rounded-md"
+                    href={`/order-details/${booking._id}`}
+                  >
+                    View Details
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
       </main>
     </div>
   );

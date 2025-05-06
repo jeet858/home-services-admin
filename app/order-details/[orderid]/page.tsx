@@ -1,8 +1,55 @@
-"use client";
+import { get } from "@/utils/axiosIntersepcer";
+import { cookies } from "next/headers";
 
-import { FaChevronLeft, FaUserCircle, FaBell } from "react-icons/fa";
+interface OrderDetailsPageProps {
+  params: { orderid: string };
+}
+interface Service {
+  _id?: string;
+  name?: string;
+  description?: string;
+}
 
-export default function OrderDetailsPage() {
+interface Booking {
+  _id?: string;
+  userId?: string;
+  services?: Service[];
+  subservices?: Service[];
+  addressId?: string;
+  date?: string; // ISO date string
+  time?: string; // e.g., '11:00 AM'
+  status?: string; // extend as needed
+  discount?: number;
+  finalPrice?: number;
+  createdAt?: string; // ISO date string
+  __v?: number;
+}
+interface Address {
+  _id?: string;
+  userId?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+  createdAt?: string; // ISO date string
+  __v?: number;
+}
+
+export default async function OrderDetailsPage({
+  params,
+}: OrderDetailsPageProps) {
+  const { orderid } = await params;
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  const response = await get(`/api/booking/${orderid}`, token);
+  const booking: Booking = response.data.data.booking;
+  const addressResponse = await get(
+    `/api/addresses/admin/${response.data.data.booking.addressId}`,
+    token
+  );
+  const address: Address = addressResponse?.data?.data?.address;
+  const bookingDate = new Date(booking.date as string);
   return (
     <div className="flex min-h-full w-full justify-center">
       {/* Main content */}
@@ -12,37 +59,36 @@ export default function OrderDetailsPage() {
         <div className="flex flex-wrap gap-8 w-full justify-center">
           {/* Left Content */}
           <div className="flex flex-col gap-4 w-full max-w-xl">
-            <h3 className="font-semibold text-lg">22nd Nov, Tuesday</h3>
+            <h3 className="font-semibold text-lg">
+              {bookingDate.getDate()},{" "}
+              {bookingDate.toLocaleString("en-US", { month: "short" })},{" "}
+              {bookingDate.toLocaleString("en-US", {
+                weekday: "long",
+              })}
+            </h3>
 
             {/* Service Cards */}
-            <div className="bg-white p-4 rounded-lg shadow-md flex gap-4 items-center">
-              <img
-                src="/diamond-facial.jpg"
-                alt="Diamond Facial"
-                className="w-20 h-20 rounded-md object-cover"
-              />
-              <div>
-                <h4 className="font-bold">Diamond Facial</h4>
-                <p className="text-sm text-gray-500">
-                  • 2 hrs
-                  <br />• Includes lorem ipsum
-                </p>
-              </div>
-            </div>
+            {booking?.subservices?.map((service, index) => {
+              return (
+                <div
+                  className="bg-white p-4 rounded-lg shadow-md flex gap-4 items-center"
+                  key={index}
+                >
+                  <div>
+                    <h4 className="font-bold">{service.name}</h4>
+                    <p className="text-sm text-gray-500">
+                      {service.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
 
-            <div className="bg-white p-4 rounded-lg shadow-md flex gap-4 items-center">
-              <img
-                src="/cleanup.jpg"
-                alt="Cleanup"
-                className="w-20 h-20 rounded-md object-cover"
-              />
-              <div>
-                <h4 className="font-bold">Cleanup</h4>
-                <p className="text-sm text-gray-500">
-                  • 30 mins
-                  <br />• Includes lorem
-                </p>
-              </div>
+            <div className="bg-white p-4 rounded-lg shadow-md grid grid-cols-2 gap-4 items-center">
+              <p className="font-bold">Service Category</p>
+              <p>{booking.services?.[0]?.name}</p>
+              <p className="font-bold">Address</p>
+              <p>{`${address?.street}, ${address?.city}, ${address?.state}, ${address?.zip}`}</p>
             </div>
           </div>
 
@@ -52,11 +98,13 @@ export default function OrderDetailsPage() {
             <div className="text-sm text-gray-700 space-y-2">
               <div className="flex justify-between">
                 <span>Item Total</span>
-                <span>₹699</span>
+                <span>{`${
+                  (booking.finalPrice as number) + (booking.discount as number)
+                }`}</span>
               </div>
               <div className="flex justify-between text-green-600">
                 <span>Item Discount</span>
-                <span>-₹50</span>
+                <span>{booking?.discount}</span>
               </div>
               <div className="flex justify-between">
                 <span>Service Fee</span>
@@ -65,11 +113,7 @@ export default function OrderDetailsPage() {
               <hr className="my-2" />
               <div className="flex justify-between font-bold text-black">
                 <span>Grand Total</span>
-                <span>₹699</span>
-              </div>
-              <div className="flex justify-between pt-2 border-t text-gray-700">
-                <span>Payment mode</span>
-                <span className="font-semibold">Paytm UPI</span>
+                <span>{`${(booking.finalPrice as number) + 50}`}</span>
               </div>
             </div>
           </div>

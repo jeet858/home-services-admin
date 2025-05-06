@@ -1,119 +1,158 @@
 "use client";
 
-import { useState } from "react";
+import { post } from "@/utils/axiosIntersepcer";
+import { MouseEvent, useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+
+interface ServiceData {
+  name: string;
+  description: string;
+  process: string;
+  originalPrice: string;
+  discountedPrice: string;
+  duration: string;
+  image: string;
+}
 
 export default function AddServicesPage() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [serviceData, setServiceData] = useState<ServiceData>({
+    name: "",
+    description: "",
+    process: "",
+    originalPrice: "",
+    discountedPrice: "",
+    duration: "",
+    image: "https://demo.link",
+  });
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(Array.from(e.target.files).slice(0, 3));
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setServiceData((prev) => ({ ...prev, [name]: value }));
+  };
+  const onSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const response = await post("/api/services", serviceData);
+    if (response.status === 201 || response.status === 200) {
+      toast.success("Service added successfully");
+    } else {
+      toast.error("Error Occured");
     }
+    console.log("res42", response);
   };
 
   return (
     <div className="flex size-full">
-      {/* Main Content */}
+      <Toaster />
       <main className="flex-1 p-8">
-        {/* Add Services Section */}
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold mb-2">Add services</h2>
+          <h2 className="text-2xl font-bold mb-2">Add Service</h2>
           <p className="text-sm text-gray-500 mb-4">
-            Upload your media. The first image will be used as the thumbnail in
-            feed. Drag and drop up to
-            <span className="font-semibold"> 3 images/videos </span>
-            to create a multi-shot.
+            Fill in the details of the service you'd like to add.
           </p>
 
-          {/* Upload Box */}
-          <div className="border-2 border-dashed border-gray-300 rounded-xl bg-gray-100 flex items-center justify-center h-60 mb-4 cursor-pointer relative">
-            <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer">
-              <input
-                type="file"
-                multiple
-                onChange={handleUpload}
-                className="hidden"
-              />
-              <p className="text-center text-gray-600">
-                <span className="text-2xl">🖼️</span>
-                <br />
-                Click to upload or drag and drop.
-                <br />
-                <span className="text-xs text-gray-400">
-                  Maximum file size 50MB
-                </span>
-              </p>
-            </label>
-          </div>
-
-          {/* Thumbnails */}
-          <div className="flex gap-4 mb-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="w-20 h-20 bg-gray-200 rounded-md flex items-center justify-center"
-              >
-                {files[i] ? (
-                  <img
-                    src={URL.createObjectURL(files[i])}
-                    alt="preview"
-                    className="w-full h-full object-cover rounded-md"
-                  />
-                ) : (
-                  <span className="text-gray-400">🖼️</span>
-                )}
-              </div>
-            ))}
-            <button className="text-blue-600 text-sm font-medium self-center">
-              + Add
-            </button>
-          </div>
-
-          {/* Title */}
+          {/* Name */}
           <div className="mb-6">
-            <label className="block mb-1 font-medium">Title</label>
+            <label className="block mb-1 font-medium">Service Name</label>
             <input
+              name="name"
               type="text"
               placeholder="Name of your service"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              value={serviceData.name}
+              onChange={handleChange}
               className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
             />
           </div>
 
           {/* Description */}
           <div className="mb-4">
-            <label className="block mb-1 font-medium">Description box</label>
+            <label className="block mb-1 font-medium">Description</label>
             <textarea
+              name="description"
               rows={4}
-              placeholder="Describe your services here..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe your service here..."
+              value={serviceData.description}
+              onChange={handleChange}
               className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
             />
           </div>
 
-          {/* Price */}
+          {/* Process */}
           <div className="mb-6">
-            <label className="block mb-1 font-medium">Add price</label>
+            <label className="block mb-1 font-medium">Process</label>
             <input
+              name="process"
+              type="text"
+              placeholder="e.g. Cleanse, Massage, Steam..."
+              value={serviceData.process}
+              onChange={handleChange}
+              className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
+            />
+          </div>
+
+          {/* Duration */}
+          <div className="mb-6">
+            <label className="block mb-1 font-medium">Duration</label>
+            <input
+              name="duration"
+              type="text"
+              placeholder="e.g. 1 hour"
+              value={serviceData.duration}
+              onChange={handleChange}
+              className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
+            />
+          </div>
+
+          {/* Original Price */}
+          <div className="mb-6">
+            <label className="block mb-1 font-medium">Original Price</label>
+            <input
+              name="originalPrice"
               type="number"
-              placeholder="₹00"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              placeholder="₹1500"
+              value={serviceData.originalPrice}
+              onChange={handleChange}
+              className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
+            />
+          </div>
+
+          {/* Discounted Price */}
+          <div className="mb-6">
+            <label className="block mb-1 font-medium">Discounted Price</label>
+            <input
+              name="discountedPrice"
+              type="number"
+              placeholder="₹999"
+              value={serviceData.discountedPrice}
+              onChange={handleChange}
               className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
             />
           </div>
 
           {/* Buttons */}
           <div className="flex justify-between">
-            <button className="border border-gray-300 px-6 py-2 rounded-full">
+            <button
+              className="border border-gray-300 px-6 py-2 rounded-full cursor-pointer hover:bg-gray-100"
+              onClick={(e) => {
+                e.preventDefault();
+                setServiceData({
+                  name: "",
+                  description: "",
+                  process: "",
+                  originalPrice: "",
+                  discountedPrice: "",
+                  duration: "",
+                  image: "https://demo.link",
+                });
+              }}
+            >
               Cancel
             </button>
-            <button className="bg-black text-white px-6 py-2 rounded-full">
+            <button
+              onClick={onSubmit}
+              className="bg-black text-white px-6 py-2 rounded-full cursor-pointer hover:bg-gray-900"
+            >
               Add
             </button>
           </div>
