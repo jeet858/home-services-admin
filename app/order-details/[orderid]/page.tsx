@@ -36,9 +36,7 @@ interface Address {
   __v?: number;
 }
 
-export default async function OrderDetailsPage({
-  params,
-}: OrderDetailsPageProps) {
+export default async function OrderDetailsPage({ params }: { params: any }) {
   const { orderid } = await params;
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
