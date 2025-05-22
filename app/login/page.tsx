@@ -2,11 +2,12 @@
 import { post, postWithoutAuth } from "@/utils/axiosIntersepcer";
 import React, { useState } from "react";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const router = useRouter();
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -23,6 +24,7 @@ export default function LoginPage() {
 
         Cookies.set("token", token, { expires: 7 }); // 7 days expiry
         console.log("Login successful. Token saved in cookies.");
+        router.push("/");
         // Redirect or store token if needed
       } else {
         console.error("Login failed:", response?.data || response);
