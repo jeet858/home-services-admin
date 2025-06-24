@@ -1,7 +1,7 @@
 import { get } from "@/utils/axiosIntersepcer";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 interface ServiceDetail {
   _id?: string;
   name?: string;
@@ -10,9 +10,9 @@ interface ServiceDetail {
   originalPrice?: number;
   discountedPrice?: number;
   duration?: string;
-  image?: string; // You may want to convert this into an array if storing multiple image URLs
-  subservices?: any[]; // Consider defining a specific Subservice interface if known
-  createdAt?: string; // ISO date string
+  image?: string;
+  subservices?: any[];
+  createdAt?: string;
   __v?: number;
 }
 
@@ -48,6 +48,7 @@ export default async function AllServicesPage() {
                 <th className="p-4">Original Price</th>
                 <th className="p-4">Discounted Price</th>
                 <th className="p-4">Duration</th>
+                <th className="p-4">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -62,6 +63,21 @@ export default async function AllServicesPage() {
                   </td>
                   <td className="p-4 text-blue-900 font-bold">
                     {service.duration}
+                  </td>
+                  <td className="p-4 flex gap-2">
+                    <Link
+                      href={`/services/edit-service/${service._id}`}
+                      className="flex items-center gap-1 px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs"
+                    >
+                      <FaEdit /> Edit
+                    </Link>
+                    <button
+                      className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
+                      // onClick={() => handleDelete(service._id)} // Implement this handler as needed
+                      type="button"
+                    >
+                      <FaTrash /> Delete
+                    </button>
                   </td>
                 </tr>
               ))}

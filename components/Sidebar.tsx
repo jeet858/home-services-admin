@@ -51,6 +51,14 @@ const Sidebar: React.FunctionComponent = () => {
                 </li>
                 <li>
                   <Link
+                    className="cursor-pointer hover:underline"
+                    href={"/services/sub-services"}
+                  >
+                    Sub Services
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href={"/services/add-service"}
                     className="cursor-pointer hover:underline"
                   >

@@ -94,17 +94,10 @@ export const put = async <T = any>(
   data: any
 ): Promise<AxiosResponse<T> | any> => {
   try {
-    const password = process.env.RPC_PASSWORD;
-    const user = process.env.RPC_USER;
-
-    if (!user || !password) {
-      throw new Error("Missing RPC credentials in environment variables");
-    }
-
+    const token = Cookies.get("token");
     const headers = {
       "Content-Type": "application/json",
-      Authorization:
-        "Basic " + Buffer.from(`${user}:${password}`).toString("base64"),
+      Authorization: `Bearer ${token}`,
     };
 
     const response = await axiosInstance.put<T>(url, data, { headers });

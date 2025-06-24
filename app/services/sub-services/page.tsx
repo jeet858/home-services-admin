@@ -1,65 +1,34 @@
-"use client";
+import SubServiceTable from "@/components/SubServiceTable";
+import { get } from "@/utils/axiosIntersepcer";
+import { cookies } from "next/headers";
+import Link from "next/link";
+import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+interface ServiceDetail {
+  _id?: string;
+  name?: string;
+  description?: string;
+  process?: string;
+  originalPrice?: number;
+  discountedPrice?: number;
+  duration?: string;
+  image?: string;
+  subservices?: any[];
+  createdAt?: string;
+  __v?: number;
+}
 
-import { FaPlus } from "react-icons/fa";
-
-export default function AllSubServicesPage() {
-  const services = [
-    {
-      name: "Facial for glow",
-      price: 599,
-      image: "/facial.jpg",
-    },
-    {
-      name: "Manicure",
-      price: 499,
-      image: "/manicure.jpg",
-    },
-    {
-      name: "Pediure",
-      price: 499,
-      image: "/pediure.jpg",
-    },
-    {
-      name: "Threading",
-      price: 59,
-      image: "/threading.jpg",
-    },
-  ];
-
+export default async function AllSubServicesPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  const response = await get(`/api/services`, token);
+  const res = await get(`/api/subservice`, token);
+  // console.log("services", response.data.data.services);
+  const services: ServiceDetail[] = response?.data?.data?.services;
+  console.log("sub-services", res?.data?.data?.subservices);
+  const subServices = res?.data?.data?.subservices;
   return (
     <div className="flex h-full w-full">
-      {/* Main Content */}
-      <main className="flex-1 p-8">
-        {/* Title & Add Button */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Salon for Women</h2>
-          <button className="flex items-center gap-2 bg-blue-800 text-white text-sm px-4 py-2 rounded-full shadow hover:bg-blue-900">
-            <FaPlus /> Add Sub Services
-          </button>
-        </div>
-
-        {/* Service Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {services.map((service, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition"
-            >
-              <img
-                src={service.image}
-                alt={service.name}
-                className="w-full h-40 object-cover"
-              />
-              <div className="p-4">
-                <h3 className="font-semibold">{service.name}</h3>
-                <p className="text-sm text-blue-900 font-bold mt-1">
-                  ₹{service.price} onwards
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
+      <SubServiceTable services={services} subServices={subServices} />
     </div>
   );
 }
