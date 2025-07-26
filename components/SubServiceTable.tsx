@@ -2,6 +2,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { del } from "@/utils/axiosIntersepcer";
+import { toast } from "react-toastify";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 
 interface ServiceDetail {
   _id?: string;
@@ -52,6 +55,21 @@ export default function SubServiceTable({
     (sub) => sub?.serviceId?._id === selectedServiceId
   );
 
+  const [localServices, setLocalServices] = useState(services);
+  const [deleteService, setDeleteService] = useState<ServiceDetail | null>(
+    null
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const handleDelete = async (id: string) => {
+    try {
+      await del(`/api/services/${id}`);
+      toast.success(`${deleteService?.name} deleted successfully!`);
+      setLocalServices((prev) => prev.filter((s) => s._id !== id));
+    } catch (error) {
+      console.error("Delete failed", error);
+      toast.error("Failed to delete service.");
+    }
+  };
   return (
     <div className="flex h-full w-full space-y-4 flex-col p-8">
       {/* Dropdown to select service */}
@@ -110,7 +128,10 @@ export default function SubServiceTable({
                     </Link>
                     <button
                       className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
-                      // onClick={() => handleDelete(sub?._id)} // Implement delete logic
+                      onClick={() => {
+                        setDeleteService(sub);
+                        setIsModalOpen(true);
+                      }}
                       type="button"
                     >
                       <FaTrash /> Delete
@@ -128,6 +149,16 @@ export default function SubServiceTable({
           </tbody>
         </table>
       </div>
+      <ConfirmDeleteModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        name={deleteService?.name as string}
+        onConfirm={() => {
+          if (deleteService?._id) {
+            handleDelete(deleteService?._id);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -125,6 +125,18 @@ export default function AddSubServicePage() {
             />
           </div>
 
+          {/* Image */}
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Image</label>
+            <input
+              name="image"
+              placeholder="Describe your service here..."
+              value={subServiceData.image}
+              onChange={handleChange}
+              className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
+            />
+          </div>
+
           {/* Process */}
           <div className="mb-6">
             <label className="block mb-1 font-medium">Process</label>

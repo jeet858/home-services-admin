@@ -2,7 +2,7 @@
 
 import { post } from "@/utils/axiosIntersepcer";
 import { MouseEvent, useEffect, useState } from "react";
-import toast, { Toaster } from "react-hot-toast";
+import { toast } from "react-toastify";
 
 interface ServiceData {
   name: string;
@@ -44,7 +44,6 @@ export default function AddServicesPage() {
 
   return (
     <div className="flex size-full">
-      <Toaster />
       <main className="flex-1 p-8">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold mb-2">Add Service</h2>
@@ -73,6 +72,18 @@ export default function AddServicesPage() {
               rows={4}
               placeholder="Describe your service here..."
               value={serviceData.description}
+              onChange={handleChange}
+              className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
+            />
+          </div>
+
+          {/* Image */}
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Image</label>
+            <input
+              name="image"
+              placeholder="Describe your service here..."
+              value={serviceData.image}
               onChange={handleChange}
               className="w-full border rounded-lg p-3 bg-gray-100 text-sm"
             />
