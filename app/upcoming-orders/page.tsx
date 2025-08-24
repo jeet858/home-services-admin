@@ -25,7 +25,6 @@ export default async function UpcomingOrderPage() {
   console.log("token in or", token);
   const orders = await get("/api/booking", token);
   const bookings: Booking[] = orders.data.data.bookings;
-  console.log("orders", orders.data.data.bookings);
   return (
     <div className="flex w-full h-full bg-gray-50">
       {/* Main Content */}
@@ -72,7 +71,7 @@ export default async function UpcomingOrderPage() {
                     })}
                   </p>
                   <ul className="mt-4 text-gray-600 space-y-1 text-sm">
-                    <li>{booking.services[0].description}</li>
+                    <li>{booking?.services[0]?.description ?? ""}</li>
                   </ul>
                 </div>
 

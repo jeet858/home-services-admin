@@ -12,10 +12,8 @@ const Sidebar: React.FunctionComponent = () => {
         pathname === "/login" ? "hidden" : ""
       }`}
     >
-      <div className="text-2xl font-bold mb-10">logo</div>
       <nav className="flex-1 space-y-6 text-gray-700 text-sm">
         <div>
-          <p className="font-bold mb-2">General Menu</p>
           <ul className="space-y-4 text-xl">
             <li className="flex items-center gap-2 cursor-pointer hover:underline">
               <House /> <span>Home</span>
@@ -71,6 +69,29 @@ const Sidebar: React.FunctionComponent = () => {
                     className="cursor-pointer hover:underline"
                   >
                     Add Sub Services
+                  </Link>
+                </li>
+              </ul>
+            </li>
+            <li className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <BriefcaseBusiness /> <span>Service Providers</span>
+              </div>
+              <ul className="pl-6 text-gray-500 space-y-1">
+                <li>
+                  <Link
+                    className="cursor-pointer hover:underline"
+                    href={"/service-providers"}
+                  >
+                    All Service Providers
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={"service-providers/add-service-providers"}
+                    className="cursor-pointer hover:underline"
+                  >
+                    Add Service Providers
                   </Link>
                 </li>
               </ul>

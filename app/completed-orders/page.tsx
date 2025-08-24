@@ -71,13 +71,13 @@ export default async function CompletedOrderPage() {
                     })}
                   </p>
                   <ul className="mt-4 text-gray-600 space-y-1 text-sm">
-                    <li>{booking.services[0].description}</li>
+                    <li>{booking?.services[0]?.description}</li>
                   </ul>
                 </div>
 
                 <div className="flex flex-col items-end gap-4">
                   <span className="text-gray-700 font-semibold">
-                    {booking.services[0].name}
+                    {booking?.services[0]?.name}
                   </span>
                   <Link
                     className="bg-blue-700 text-white px-6 py-2 rounded-md cursor-pointer hover:bg-blue-900"

@@ -1,3 +1,5 @@
+import AssignProvider from "@/components/AssignProvider";
+import { Booking, ServiceProvider } from "@/types/serviceProviderType";
 import { get } from "@/utils/axiosIntersepcer";
 import { cookies } from "next/headers";
 
@@ -10,20 +12,6 @@ interface Service {
   description?: string;
 }
 
-interface Booking {
-  _id?: string;
-  userId?: string;
-  services?: Service[];
-  subservices?: Service[];
-  addressId?: string;
-  date?: string; // ISO date string
-  time?: string; // e.g., '11:00 AM'
-  status?: string; // extend as needed
-  discount?: number;
-  finalPrice?: number;
-  createdAt?: string; // ISO date string
-  __v?: number;
-}
 interface Address {
   _id?: string;
   userId?: string;
@@ -46,12 +34,14 @@ export default async function OrderDetailsPage({ params }: { params: any }) {
     `/api/addresses/admin/${response.data.data.booking.addressId}`,
     token
   );
+  const res = await get(`/api/service-providers`, token);
+  const serviceProvider: ServiceProvider[] = res.data.data.serviceProviders;
   const address: Address = addressResponse?.data?.data?.address;
   const bookingDate = new Date(booking.date as string);
   return (
-    <div className="flex min-h-full w-full justify-center">
+    <div className="flex min-h-full w-full items-center flex-col">
       {/* Main content */}
-      <main className="flex-1 p-8">
+      <main className="p-8 w-full justify-center">
         {/* Order Details Section */}
         <h2 className="text-3xl font-bold mb-6 text-center">Oder Details</h2>
         <div className="flex flex-wrap gap-8 w-full justify-center">
@@ -117,6 +107,28 @@ export default async function OrderDetailsPage({ params }: { params: any }) {
           </div>
         </div>
       </main>
+      <div className="flex flex-wrap gap-8 w-full justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm">
+          <h4 className="font-semibold mb-4">Servide Provider Details</h4>
+          <div className="text-sm text-gray-700 space-y-2">
+            <div className="flex justify-between">
+              <span>Name</span>
+              <span>{booking?.serviceProviderId?.name}</span>
+            </div>
+            <div className="flex justify-between text-green-600">
+              <span>Phone Number</span>
+              <span>
+                <span>{booking?.serviceProviderId?.phoneNumber}</span>
+              </span>
+            </div>
+            {/* <div className="flex justify-between">
+                <span>Rating</span>
+                <span>{booking?.serviceProviderId?.rating}</span>
+              </div> */}
+          </div>
+        </div>
+        <AssignProvider bookingId={orderid} providers={serviceProvider} />
+      </div>
     </div>
   );
 }
