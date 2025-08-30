@@ -1,32 +1,62 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import Cookies from "js-cookie";
+import rateLimit from "axios-rate-limit";
+import { logToFile } from "./logger"; // ✅ import our logger
 
 export const dynamic = "force-dynamic";
 
-const axiosInstance: AxiosInstance = axios.create({
+let axiosBase: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BASE_API_URL,
 });
 
-export const extraHeaders: Record<string, string> = {
-  "Cache-Control": "no-cache, no-store, must-revalidate",
-  Pragma: "no-cache",
-  Expires: "0",
-};
+const axiosInstance: AxiosInstance = rateLimit(axiosBase, {
+  maxRequests: 5,
+  perMilliseconds: 1000,
+  maxRPS: 5,
+});
 
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
+    const logMsg = `[Request] ${config.method?.toUpperCase()} ${
+      config.url
+    } | headers: ${JSON.stringify(config.headers)} | params: ${JSON.stringify(
+      config.params
+    )} | data: ${JSON.stringify(config.data)}`;
+
+    logToFile(logMsg); // ✅ save to file
     return config;
   },
   (error) => {
+    logToFile(`[Request Error] ${error.message}`);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error) => Promise.reject(error)
+  (response: AxiosResponse) => {
+    const logMsg = `[Response] ${response.status} ${
+      response.config.url
+    } | data: ${JSON.stringify(response.data)}`;
+
+    logToFile(logMsg); // ✅ save to file
+    return response;
+  },
+  (error) => {
+    if (error.response) {
+      const logMsg = `[Error Response] ${error.response.status} ${
+        error.config.url
+      } | data: ${JSON.stringify(error.response.data)}`;
+
+      logToFile(logMsg);
+    } else {
+      const logMsg = `[Network Error] ${error.message}`;
+
+      logToFile(logMsg);
+    }
+    return Promise.reject(error);
+  }
 );
 
 // GET request
@@ -88,6 +118,42 @@ export const post = async <T = any>(
     return error;
   }
 };
+// Form data POST request
+export const formDataPost = async <T = any>(
+  url: string,
+  data: any
+): Promise<AxiosResponse<T> | any> => {
+  try {
+    const token = Cookies.get("token");
+    const headers = {
+      "Content-Type": "multipart/form-data",
+      Authorization: `Bearer ${token}`,
+    };
+
+    const response = await axiosInstance.post<T>(url, data, { headers });
+    return response;
+  } catch (error: any) {
+    return error;
+  }
+};
+// Form data PUT request
+export const formDataPut = async <T = any>(
+  url: string,
+  data: any
+): Promise<AxiosResponse<T> | any> => {
+  try {
+    const token = Cookies.get("token");
+    const headers = {
+      "Content-Type": "multipart/form-data",
+      Authorization: `Bearer ${token}`,
+    };
+
+    const response = await axiosInstance.put<T>(url, data, { headers });
+    return response;
+  } catch (error: any) {
+    return error;
+  }
+};
 // PUT request
 export const put = async <T = any>(
   url: string,
@@ -117,7 +183,6 @@ export const del = async <T = any>(
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     };
-    
 
     const response = await axiosInstance.delete<T>(url, { headers });
     return response;

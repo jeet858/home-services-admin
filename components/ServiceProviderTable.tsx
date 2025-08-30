@@ -1,8 +1,11 @@
+"use client";
 import { ServiceProvider } from "@/types/serviceProviderType";
-import React from "react";
+import React, { useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import Link from "next/link";
+import { del } from "@/utils/axiosIntersepcer";
+import { toast } from "react-toastify";
 
 interface ServiceProvidersTableprops {
   data: ServiceProvider[];
@@ -11,6 +14,20 @@ interface ServiceProvidersTableprops {
 const ServiceProvidersTable: React.FunctionComponent<
   ServiceProvidersTableprops
 > = ({ data }) => {
+    const [localServices, setLocalServices] = useState(data);
+    const [deleteServiceProvider, setDeleteServiceProvider] = useState<ServiceProvider | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleDelete = async (id: string) => {
+        try {
+          await del(`/api/service-providers/${id}`);
+          toast.success(`${deleteServiceProvider?.name} deleted successfully!`);
+          setLocalServices((prev) => prev.filter((s) => s.id !== id));
+        } catch (error) {
+          console.error("Delete failed", error);
+          toast.error("Failed to delete service.");
+        }
+      };
   return (
     <>
       <table className="min-w-full bg-white rounded-xl shadow">
@@ -24,31 +41,31 @@ const ServiceProvidersTable: React.FunctionComponent<
           </tr>
         </thead>
         <tbody>
-          {data.map((provider, idx) => (
+          {localServices.map((provider, idx) => (
             <tr
               key={provider.id}
               className="border-t hover:bg-gray-50 transition"
             >
               <td className="p-4">{idx + 1}</td>
-              <td className="p-4 font-medium">{provider.name}</td>
+              <td className="p-4 font-medium">{provider?.name}</td>
               <td className="p-4 font-medium">
-                {provider.services.join(", ")}
+                {provider.services?.map(service => service.name).join(", ")}
               </td>
-              <td className="p-4 font-medium">{provider.phoneNumber}</td>
+              <td className="p-4 font-medium">{provider?.phoneNumber}</td>
 
               <td className="p-4 flex gap-2">
                 <Link
-                  href={`/services/edit-service/${provider.id}`}
+                  href={`/service-providers/edit-service-providers/${provider?.id}`}
                   className="flex items-center gap-1 px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-xs"
                 >
                   <FaEdit /> Edit
                 </Link>
                 <button
                   className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
-                  // onClick={() => {
-                  //   setDeleteService(service);
-                  //   setIsModalOpen(true);
-                  // }}
+                  onClick={() => {
+                    setDeleteServiceProvider(provider);
+                    setIsModalOpen(true);
+                  }}
                 >
                   <FaTrash /> Delete
                 </button>
@@ -58,16 +75,17 @@ const ServiceProvidersTable: React.FunctionComponent<
         </tbody>
       </table>
 
-      {/* <ConfirmDeleteModal
+      <ConfirmDeleteModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        name={deleteService?.name as string}
+        name={deleteServiceProvider?.name as string}
+        page="Service Provider"
         onConfirm={() => {
-          if (deleteService?._id) {
-            handleDelete(deleteService?._id);
+          if (deleteServiceProvider?.id) {
+            handleDelete(deleteServiceProvider?.id);
           }
         }}
-      /> */}
+      />
     </>
   );
 };

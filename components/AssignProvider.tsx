@@ -40,12 +40,12 @@ export default function AssignProvider({ bookingId, providers }: Props) {
   };
 
   const selectedName =
-    providers.find((p) => p.id === selectedProvider)?.name ||
+    providers.find((provider) => provider?.id === selectedProvider)?.name ||
     "Select service provider";
 
   // filter providers by search
-  const filteredProviders = providers.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+  const filteredProviders = providers.filter((provider) =>
+    provider?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -85,26 +85,26 @@ export default function AssignProvider({ bookingId, providers }: Props) {
             </div>
 
             {filteredProviders.length > 0 ? (
-              filteredProviders.map((provider) => (
+              filteredProviders.map((provider, index) => (
                 <div
-                  key={provider.id}
+                  key={index}
                   className="flex justify-between items-center px-4 py-2 hover:bg-gray-50 border-b last:border-none"
                 >
                   <div>
-                    <p className="font-medium">{provider.name}</p>
+                    <p className="font-medium">{provider?.name}</p>
                     <p className="text-sm text-gray-500">
-                      {provider.phoneNumber}
+                      {provider?.phoneNumber}
                     </p>
                   </div>
                   <button
-                    onClick={() => handleAssign(provider.id)}
+                    onClick={() => handleAssign(provider?.id ?? "")}
                     className={`px-4 py-1 rounded-md text-white text-sm ${
-                      selectedProvider === provider.id
+                      selectedProvider === provider?.id
                         ? "bg-green-600"
                         : "bg-blue-600"
                     }`}
                   >
-                    {selectedProvider === provider.id ? "Assigned" : "Assign"}
+                    {selectedProvider === provider?.id ? "Assigned" : "Assign"}
                   </button>
                 </div>
               ))

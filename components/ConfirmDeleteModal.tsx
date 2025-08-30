@@ -4,6 +4,7 @@ import React from "react";
 
 interface ConfirmDeleteModalProps {
   isOpen: boolean;
+  page?: string;
   name: string;
   onClose: () => void;
   onConfirm: () => void;
@@ -13,7 +14,8 @@ export default function ConfirmDeleteModal({
   isOpen,
   onClose,
   onConfirm,
-  name
+  name,
+  page,
 }: ConfirmDeleteModalProps) {
   if (!isOpen) return null;
 
@@ -22,7 +24,7 @@ export default function ConfirmDeleteModal({
       <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-sm">
         <h2 className="text-lg font-semibold mb-4">Confirm Delete</h2>
         <p className="text-sm mb-6">
-          Are you sure you want to delete this service? {name}
+          Are you sure you want to delete this {page ? page : "service"}, <span className="font-bold">{name}</span>
         </p>
         <div className="flex justify-end gap-2">
           <button
