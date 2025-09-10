@@ -1,7 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import Cookies from "js-cookie";
 import rateLimit from "axios-rate-limit";
-import { logToFile } from "./logger"; // ✅ import our logger
 
 export const dynamic = "force-dynamic";
 
@@ -24,11 +23,11 @@ axiosInstance.interceptors.request.use(
       config.params
     )} | data: ${JSON.stringify(config.data)}`;
 
-    logToFile(logMsg); // ✅ save to file
+    
     return config;
   },
   (error) => {
-    logToFile(`[Request Error] ${error.message}`);
+    
     return Promise.reject(error);
   }
 );
@@ -40,7 +39,7 @@ axiosInstance.interceptors.response.use(
       response.config.url
     } | data: ${JSON.stringify(response.data)}`;
 
-    logToFile(logMsg); // ✅ save to file
+    
     return response;
   },
   (error) => {
@@ -49,11 +48,11 @@ axiosInstance.interceptors.response.use(
         error.config.url
       } | data: ${JSON.stringify(error.response.data)}`;
 
-      logToFile(logMsg);
+      
     } else {
       const logMsg = `[Network Error] ${error.message}`;
 
-      logToFile(logMsg);
+      
     }
     return Promise.reject(error);
   }
