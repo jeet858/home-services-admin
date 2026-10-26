@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Subidha Admin
 
-## Getting Started
+Operations console for the Subidha home-services app — bookings, professionals, catalogue, customers, reviews, coupons and admin team. Built with Next.js 15 (App Router), shadcn/ui (Radix), TanStack Query/Table, react-hook-form + zod, and installable as a PWA.
 
-First, run the development server:
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # set NEXT_PUBLIC_BASE_API_URL to the subidha_backend URL
+npm install
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+In production the backend only accepts origins listed in its `ALLOWED_ORIGINS` env var — add this admin's URL there.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Admin endpoints this app relies on that were added to `subidha_backend` alongside the redesign:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `GET /api/admin/stats` — dashboard totals, 30-day series, top services
+- `GET /api/booking` filters — `status`, `paymentStatus`, `from`, `to`, `unassigned`, `userId`, `providerId`, `search`
+- `PATCH /api/booking/:id/status` — optional `reason` stored when cancelling
+- `GET /api/coupons/admin/all` — every coupon, including inactive/expired
+- `GET /api/admin/users?search=` — customer search
 
-## Learn More
+## Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/(auth)/login        sign-in
+app/(admin)/…           dashboard and feature pages (client-rendered, data via TanStack Query)
+app/manifest.ts         PWA manifest; public/sw.js is the service worker
+components/ui           shadcn components (add more with `npx shadcn@latest add <name>`)
+components/layout       sidebar, header, ⌘K command menu, user menu
+components/shared       status badges, dialogs, empty/error states, uploads
+features/<domain>       API hooks (api.ts) and domain components
+lib/api/client.ts       fetch wrapper; normalises the backend's response envelopes
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Auth: the admin JWT is kept in the `subidha_admin_token` cookie; `middleware.ts` guards routes and any 401 signs the user out.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Brand tokens (colours mirrored from the Flutter app's `colors.dart`) live in `app/globals.css`; light and dark themes are supported.
 
-## Deploy on Vercel
+## PWA
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Icons are generated from the app logo into `public/icons` (incl. maskable) and `app/icon.png` / `app/apple-icon.png`.
+- `public/sw.js` caches static assets and pages for an offline fallback (`/offline`). API responses are never cached.
+- The worker registers in production builds only (`npm run build && npm start`). A toast offers a reload when a new version is deployed; bump `VERSION` in `sw.js` to force old caches out.
+- "Install app" appears in the user menu when the browser supports it.
