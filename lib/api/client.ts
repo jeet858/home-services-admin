@@ -1,3 +1,4 @@
+import axios, { type AxiosResponse } from "axios";
 import { clearSession, getToken } from "@/lib/auth";
 import type { Pagination } from "@/types/api";
 
@@ -29,16 +30,30 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
-function buildUrl(path: string, query?: Query) {
-  const url = `${BASE_URL}${path}`;
-  if (!query) return url;
-  const params = new URLSearchParams();
+export const http = axios.create({
+  baseURL: BASE_URL,
+  headers: { Accept: "application/json" },
+  // Keep raw text so plain-text bodies (rate limiter, 404s) survive; we parse JSON ourselves.
+  responseType: "text",
+  transformResponse: [(data) => data],
+  // Envelope errors can arrive with 2xx, so all failure handling lives in api().
+  validateStatus: () => true,
+});
+
+http.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+function cleanQuery(query?: Query) {
+  if (!query) return undefined;
+  const params: Record<string, string> = {};
   for (const [key, value] of Object.entries(query)) {
     if (value === undefined || value === null || value === "") continue;
-    params.set(key, String(value));
+    params[key] = String(value);
   }
-  const qs = params.toString();
-  return qs ? `${url}?${qs}` : url;
+  return params;
 }
 
 // The backend mixes three envelopes:
@@ -57,27 +72,25 @@ function normalize<T>(body: any): ApiResult<T> {
 
 export async function api<T = unknown>(path: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
   const { method = "GET", query, body, signal } = options;
-  const headers: Record<string, string> = { Accept: "application/json" };
-  const token = getToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const hadToken = Boolean(getToken());
 
-  let payload: BodyInit | undefined;
-  if (body instanceof FormData) {
-    payload = body;
-  } else if (body !== undefined) {
-    headers["Content-Type"] = "application/json";
-    payload = JSON.stringify(body);
-  }
-
-  let res: Response;
+  let res: AxiosResponse<string>;
   try {
-    res = await fetch(buildUrl(path, query), { method, headers, body: payload, signal });
+    res = await http.request<string>({
+      url: path,
+      method,
+      params: cleanQuery(query),
+      // axios serializes objects as JSON and sends FormData as multipart.
+      data: body,
+      signal,
+    });
   } catch (error) {
-    if ((error as Error).name === "AbortError") throw error;
+    if (axios.isCancel(error)) throw new DOMException("Request aborted", "AbortError");
     throw new ApiError(0, "Can't reach the server. Check your connection and try again.");
   }
 
-  const text = await res.text();
+  const text = res.data ?? "";
+  const ok = res.status >= 200 && res.status < 300;
   let json: any = null;
   try {
     json = text ? JSON.parse(text) : null;
@@ -85,13 +98,13 @@ export async function api<T = unknown>(path: string, options: RequestOptions = {
     // Rate limiter and 404s can return plain text.
   }
 
-  const failed = !res.ok || json?.success === false || json?.status === "fail" || json?.status === "error";
+  const failed = !ok || json?.success === false || json?.status === "fail" || json?.status === "error";
   if (failed) {
     const message =
       json?.message ||
       (res.status === 429 ? "Too many requests — please wait a moment and try again." : text) ||
       `Request failed (${res.status})`;
-    if (res.status === 401 && token && typeof window !== "undefined") {
+    if (res.status === 401 && hadToken && typeof window !== "undefined") {
       clearSession();
       const next = encodeURIComponent(window.location.pathname + window.location.search);
       window.location.replace(`/login?next=${next}`);
