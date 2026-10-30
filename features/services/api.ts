@@ -103,6 +103,17 @@ export function useUpdateSubservice() {
   );
 }
 
+// Uploads to Supabase Storage via the backend; returns the public URL to save as `image`.
+export function useUploadImage() {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const body = new FormData();
+      body.append("image", file);
+      return (await api<{ url: string; key: string }>("/api/uploads/image", { method: "POST", body })).data.url;
+    },
+  });
+}
+
 export function useDeleteSubservice() {
   return useCatalogueMutation((id: string) => api(`/api/subservice/${id}`, { method: "DELETE" }));
 }

@@ -1,8 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, XIcon } from "lucide-react";
+import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,9 +14,11 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { FileDropzone } from "@/components/shared/file-dropzone";
 import { Thumb } from "@/components/shared/image-preview";
+import { errorMessage } from "@/lib/api/client";
 import type { Service } from "@/types/api";
-import type { CatalogueInput } from "./api";
+import { type CatalogueInput, useUploadImage } from "./api";
 
 const schema = z
   .object({
@@ -25,7 +29,7 @@ const schema = z
     originalPrice: z.number({ error: "Enter a price" }).min(0, "Price can't be negative"),
     discountedPrice: z.number({ error: "Enter a price" }).min(0, "Price can't be negative"),
     duration: z.string().trim().min(1, "Duration is required").max(40),
-    image: z.union([z.literal(""), z.url("Enter a full image URL (https://…)")]),
+    image: z.union([z.literal(""), z.url("Image upload failed — try again")]),
   })
   .refine((v) => v.discountedPrice <= v.originalPrice, {
     path: ["discountedPrice"],
@@ -87,6 +91,19 @@ export function CatalogueForm({
   });
 
   const [image, original, discounted] = useWatch({ control: form.control, name: ["image", "originalPrice", "discountedPrice"] });
+  const upload = useUploadImage();
+  const [uploading, setUploading] = useState<File | null>(null);
+
+  const pickImage = (file: File | null) => {
+    if (!file) return form.setValue("image", "", { shouldDirty: true, shouldValidate: true });
+    setUploading(file);
+    upload.mutate(file, {
+      onSuccess: (url) => form.setValue("image", url, { shouldDirty: true, shouldValidate: true }),
+      onError: (err) => toast.error(errorMessage(err, "Image upload failed")),
+      onSettled: () => setUploading(null),
+    });
+  };
+
   const savings = original > 0 && discounted >= 0 && discounted < original ? Math.round(((original - discounted) / original) * 100) : 0;
 
   const priceField = (name: "originalPrice" | "discountedPrice", label: string, description: string) => (
@@ -228,20 +245,32 @@ export function CatalogueForm({
             <CardTitle>Image</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <Thumb src={image || null} alt="Preview" className="aspect-video size-auto w-full rounded-xl" />
-            <Controller
-              control={form.control}
-              name="image"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="image" className="sr-only">
-                    Image URL
-                  </FieldLabel>
-                  <Input {...field} id="image" type="url" placeholder="https://…" disabled={lockImage} aria-invalid={fieldState.invalid} />
-                  <FieldError errors={[fieldState.error]} />
-                </Field>
-              )}
-            />
+            {lockImage ? (
+              <Thumb src={image || null} alt="Preview" className="aspect-video size-auto w-full rounded-xl" />
+            ) : (
+              <div className="relative">
+                <FileDropzone
+                  label="Upload image"
+                  file={uploading}
+                  existingUrl={image || null}
+                  onChange={pickImage}
+                  onError={(message) => toast.error(message)}
+                  className={upload.isPending ? "pointer-events-none opacity-60" : undefined}
+                />
+                {upload.isPending && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Spinner />
+                  </div>
+                )}
+              </div>
+            )}
+            {!lockImage && image && !upload.isPending && (
+              <Button type="button" variant="outline" size="sm" onClick={() => pickImage(null)}>
+                <XIcon data-icon="inline-start" />
+                Remove image
+              </Button>
+            )}
+            <FieldError errors={[form.formState.errors.image]} />
             {lockImage && (
               <p className="flex gap-2 text-xs text-muted-foreground">
                 <InfoIcon className="size-3.5 shrink-0" />
@@ -257,7 +286,7 @@ export function CatalogueForm({
               Cancel
             </Button>
           )}
-          <Button type="submit" className="flex-1" disabled={pending}>
+          <Button type="submit" className="flex-1" disabled={pending || upload.isPending}>
             {pending && <Spinner data-icon="inline-start" />}
             {submitLabel}
           </Button>
